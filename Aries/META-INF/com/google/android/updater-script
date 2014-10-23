@@ -1,0 +1,86 @@
+assert(getprop("ro.product.device") == "aries" ||
+       getprop("ro.build.product") == "aries");
+show_progress(0.500000, 3);
+
+ui_print("mounting system");
+ifelse(
+mount("ext4", "EMMC", "/dev/block/platform/msm_sdcc.1/by-name/system", "/system"),
+  (
+    # /system EXT4 mount
+    ui_print("/system is EXT4");
+  ),
+  (
+    # /system F2FS mount
+    mount("f2fs", "EMMC", "/dev/block/platform/msm_sdcc.1/by-name/system", "/system");
+    ui_print("/system is F2FS");
+  )
+);
+
+ui_print(" ");
+ui_print("              Khaon's kernel");
+ui_print("         For Xiaomi MI-2/S (aries)");
+
+ui_print("Deleting former modules and copying new ones");
+ui_print("");
+delete_recursive("/system/lib/modules");
+#assert(package_extract_dir("", "/tmp/anykernel"));
+assert(package_extract_dir("system", "/system"));
+
+
+set_progress(0.3);
+
+ui_print("setting permissions");
+ui_print("");
+set_perm_recursive(0, 2000, 0755, 0755, "/system/etc/init.d");
+set_perm(0, 0, 0755, "/system/etc/init.d");
+set_perm_recursive(0, 0, 0755, 0555, "/system/etc/init.d");
+set_perm(0, 0, 0755, "/system/bin/mount_khaon_userdata.sh");
+set_perm(0, 2000, 0755, "/system/bin/mount_khaon_userdata.sh");
+set_perm(0, 0, 0755, "/system/bin/mount_ext4.sh");
+set_perm(0, 2000, 0755, "/system/bin/mount_ext4.sh");
+
+set_progress(0.5);
+
+
+ui_print("Flashing Kernel");
+ui_print("");
+show_progress(1.0, 2);
+
+#assert(run_program("/sbin/sh", "/tmp/anykernel/anykernel.sh"));
+package_extract_file("boot.img", "/dev/block/platform/msm_sdcc.1/by-name/boot");
+
+set_progress(0.7);
+ui_print("Wiping caches");
+unmount("/data");
+unmount("/cache");
+ifelse(
+mount("ext4", "EMMC", "/dev/block/platform/msm_sdcc.1/by-name/userdata", "/data"),
+  (
+    ui_print("/data is ext4");
+  ),
+  (
+    mount("f2fs", "EMMC", "/dev/block/platform/msm_sdcc.1/by-name/userdata", "/data");
+    ui_print("/data is f2fs");
+ )
+);
+ifelse(
+mount("ext4", "EMMC", "/dev/block/platform/msm_sdcc.1/by-name/cache", "/cache"),
+  (
+    # /data EXT4 mount
+    ui_print("/data is EXT4");
+  ),
+  (
+    # /data F2FS mount
+    mount("f2fs", "EMMC", "/dev/block/platform/msm_sdcc.1/by-name/cache", "/cache");
+    ui_print("/data is F2FS");
+  )
+);
+delete_recursive("/cache");
+set_progress(0.7);
+delete_recursive("/data/dalvik-cache");
+
+set_progress(1.0);
+unmount("/data");
+unmount("/cache");
+unmount("/system");
+ui_print("Flashing done enjoy");
