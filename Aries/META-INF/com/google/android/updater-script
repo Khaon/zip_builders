@@ -39,6 +39,10 @@ set_perm(0, 2000, 0755, "/system/bin/mount_khaon_userdata.sh");
 set_perm(0, 0, 0755, "/system/bin/mount_ext4.sh");
 set_perm(0, 2000, 0755, "/system/bin/mount_ext4.sh");
 
+ui_print("Deleting thermald and mpdecision binaries");
+delete("system/bin/mpdecision","system/bin/thermald");
+ui_print("");
+
 set_progress(0.5);
 
 
